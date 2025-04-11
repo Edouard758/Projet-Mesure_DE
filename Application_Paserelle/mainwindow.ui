@@ -1,0 +1,655 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>632</width>
+    <height>800</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QLabel" name="gatewayNameLabel">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>110</y>
+      <width>221</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Nouveau Nom Paserelle :</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="gatewayNameEdit">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>120</y>
+      <width>151</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="AppliquerModification">
+    <property name="geometry">
+     <rect>
+      <x>230</x>
+      <y>650</y>
+      <width>171</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Appliquer la configuration</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="ipAddressLabel">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>160</y>
+      <width>191</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Nouvelle Adresse Ip :</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="ipAddressEdit">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>170</y>
+      <width>151</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="modifyGatewayButton">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>110</y>
+      <width>131</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Modifer Paserelle M50</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="acquisitionModelButton">
+    <property name="geometry">
+     <rect>
+      <x>200</x>
+      <y>110</y>
+      <width>201</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Modifier modele d'aquisition I-30</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="measureModelButton">
+    <property name="geometry">
+     <rect>
+      <x>420</x>
+      <y>110</y>
+      <width>201</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Modifer modele de mesure U-10</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="returnButton">
+    <property name="geometry">
+     <rect>
+      <x>500</x>
+      <y>40</y>
+      <width>91</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Retour</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="ipAddressPaserelleLabel">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>220</y>
+      <width>201</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Nouvelle Adresse Ip de la paserelle:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="ipAddressMaskLabel">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>290</y>
+      <width>191</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Nouveau Mask de sous réseaux :</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="ipAddressDNSLabel">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>360</y>
+      <width>201</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Nouvelle Adresse de serveur DNS :</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="TimeZoneLabel">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>430</y>
+      <width>191</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Time zone de la paserelle :</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="DHCPLabel">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>490</y>
+      <width>191</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>DHCP :</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="EtatModbusLabel">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>540</y>
+      <width>191</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Modbus :</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="ipAddressPaserelleEdit">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>230</y>
+      <width>151</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="ipAddressMaskEdit">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>300</y>
+      <width>151</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="ipAddressDNSEdit">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>370</y>
+      <width>151</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBoxDHCP">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>500</y>
+      <width>151</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBoxModbus">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>550</y>
+      <width>151</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBoxTimeZone">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>440</y>
+      <width>181</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="NameModeleAquisitionLabel">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>60</y>
+      <width>221</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Nouveau nom modele acquisition  :</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="NameModeleAcquisitionEdit">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>70</y>
+      <width>151</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="returnButton2">
+    <property name="geometry">
+     <rect>
+      <x>500</x>
+      <y>40</y>
+      <width>91</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Retour</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="returnButton3">
+    <property name="geometry">
+     <rect>
+      <x>500</x>
+      <y>40</y>
+      <width>91</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Retour</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="PeriodeIntegrationInst">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>110</y>
+      <width>271</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Valeur de periode d'integration instantaner (*0.2s) :</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="PeriodeIntegrationInstEdit">
+    <property name="geometry">
+     <rect>
+      <x>450</x>
+      <y>120</y>
+      <width>161</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="status1">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>160</y>
+      <width>191</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Status du Capteur N°1 : </string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="status2">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>220</y>
+      <width>191</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Status du Capteur N°2 : </string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="status3">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>290</y>
+      <width>191</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Status du Capteur N°3 : </string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBoxStatus1">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>170</y>
+      <width>151</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBoxStatus2">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>230</y>
+      <width>151</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBoxStatus3">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>300</y>
+      <width>151</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="usage1">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>360</y>
+      <width>191</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Usage du capteur N°1:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="usage2">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>430</y>
+      <width>191</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Usage du capteur N°2:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="usage3">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>490</y>
+      <width>191</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Usage du capteur N°3:</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBoxUsage1">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>370</y>
+      <width>151</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBoxUsage2">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>440</y>
+      <width>151</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBoxUsage3">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>500</y>
+      <width>151</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="TypeCharge">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>110</y>
+      <width>191</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Type de charge :</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBoxCharge">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>120</y>
+      <width>271</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="PeriodeIntegrationMoy">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>160</y>
+      <width>271</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Valeur de periode de mesure moyen (en minute) :</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="PeriodeIntegrationCourbe">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>220</y>
+      <width>411</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Valeur de periode de mise a jour de courbe des charges (en minute) :</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="PeriodeIntegrationMoyEdit">
+    <property name="geometry">
+     <rect>
+      <x>450</x>
+      <y>170</y>
+      <width>161</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="PeriodeIntegrationCourbeEdit">
+    <property name="geometry">
+     <rect>
+      <x>450</x>
+      <y>230</y>
+      <width>161</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="NameDomaine">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>600</y>
+      <width>101</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Nom Domaine :</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="NameDomaineEdit">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>610</y>
+      <width>151</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="PrimaryKeylabel">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>20</y>
+      <width>161</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Configuration Dispositif :</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="PrimaryKey">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>20</y>
+      <width>151</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <zorder>measureModelButton</zorder>
+   <zorder>acquisitionModelButton</zorder>
+   <zorder>modifyGatewayButton</zorder>
+   <zorder>gatewayNameLabel</zorder>
+   <zorder>gatewayNameEdit</zorder>
+   <zorder>AppliquerModification</zorder>
+   <zorder>ipAddressLabel</zorder>
+   <zorder>ipAddressEdit</zorder>
+   <zorder>returnButton</zorder>
+   <zorder>ipAddressPaserelleLabel</zorder>
+   <zorder>ipAddressMaskLabel</zorder>
+   <zorder>ipAddressDNSLabel</zorder>
+   <zorder>TimeZoneLabel</zorder>
+   <zorder>DHCPLabel</zorder>
+   <zorder>EtatModbusLabel</zorder>
+   <zorder>ipAddressPaserelleEdit</zorder>
+   <zorder>ipAddressMaskEdit</zorder>
+   <zorder>ipAddressDNSEdit</zorder>
+   <zorder>comboBoxDHCP</zorder>
+   <zorder>comboBoxModbus</zorder>
+   <zorder>comboBoxTimeZone</zorder>
+   <zorder>NameModeleAquisitionLabel</zorder>
+   <zorder>NameModeleAcquisitionEdit</zorder>
+   <zorder>returnButton2</zorder>
+   <zorder>returnButton3</zorder>
+   <zorder>PeriodeIntegrationInst</zorder>
+   <zorder>PeriodeIntegrationInstEdit</zorder>
+   <zorder>status1</zorder>
+   <zorder>status2</zorder>
+   <zorder>status3</zorder>
+   <zorder>comboBoxStatus1</zorder>
+   <zorder>comboBoxStatus2</zorder>
+   <zorder>comboBoxStatus3</zorder>
+   <zorder>usage1</zorder>
+   <zorder>usage2</zorder>
+   <zorder>usage3</zorder>
+   <zorder>comboBoxUsage1</zorder>
+   <zorder>comboBoxUsage2</zorder>
+   <zorder>comboBoxUsage3</zorder>
+   <zorder>TypeCharge</zorder>
+   <zorder>comboBoxCharge</zorder>
+   <zorder>PeriodeIntegrationMoy</zorder>
+   <zorder>PeriodeIntegrationCourbe</zorder>
+   <zorder>PeriodeIntegrationMoyEdit</zorder>
+   <zorder>PeriodeIntegrationCourbeEdit</zorder>
+   <zorder>NameDomaine</zorder>
+   <zorder>NameDomaineEdit</zorder>
+   <zorder>PrimaryKeylabel</zorder>
+   <zorder>PrimaryKey</zorder>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>632</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
