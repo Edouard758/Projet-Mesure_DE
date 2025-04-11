@@ -1,6 +1,7 @@
 QT       += core gui
 QT += network
 QT += sql
+LIBS += -lws2_32
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -12,10 +13,12 @@ CONFIG += c++17
 
 SOURCES += \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    modbus.cpp
 
 HEADERS += \
-    mainwindow.h
+    mainwindow.h \
+    modbus.h
 
 FORMS += \
     mainwindow.ui

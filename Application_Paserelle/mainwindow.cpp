@@ -11,6 +11,7 @@
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QDebug>
+#include "modbus.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) // <- ici l’ordre est important !
@@ -135,47 +136,30 @@ void MainWindow::setupUi() {
 
 }
 
+void MainWindow::ModifieModbus() {
+    ModbusCommunicator modbus("192.168.22.1", 502);  // Connexion au serveur Modbus
 
+    // Requête Modbus pour écrire la valeur "Pe" dans le registre
+    unsigned char modbusRequestWrite[] = {
+        0x00, 0x02,           // Identifiant de transaction (2 octets)
+        0x00, 0x00,           // Protocole (2 octets)
+        0x00, 0x06,           // Longueur du message (2 octets)
+        0xFF, 0x06,           // Adresse de l'esclave (0xFF) et fonction d'écriture (0x06 pour écrire un registre)
+        0x7A, 0x00,           // Adresse du registre à modifier (ici 0x7A00)
+        0x01, 0x00,           // Nombre de registres à écrire (2 registres)
+        0x01, 0x00           // Valeur ASCII de "P" -> 0x50          // Valeur ASCII de "e" -> 0x65
+    };
 
+    // Appel à la fonction pour envoyer la requête Modbus et vérifier si l'écriture est réussie
+    bool success = modbus.writeModbusRegister(modbusRequestWrite, sizeof(modbusRequestWrite));
 
-
-
-
-
-void MainWindow::sendConfigToGateway(const QJsonObject &config) {
-    QUrl url("http://192.168.22.1/api/config"); // Utilisez l'adresse IP de la passerelle
-    QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-
-    QString userAndPassword = "Admin:Adminsn1234$";
-    QByteArray base64Encoded = userAndPassword.toUtf8().toBase64();
-    request.setRawHeader("Authorization", "Basic " + base64Encoded);
-
-
-    QJsonDocument doc(config);
-    QByteArray jsonData = doc.toJson();
-
-    QNetworkReply *reply = networkManager->put(request, jsonData);
-
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-        if (reply->error() == QNetworkReply::NoError) {
-            QByteArray responseData = reply->readAll();
-            QJsonDocument responseDoc = QJsonDocument::fromJson(responseData);
-            qDebug() << "Réponse de la passerelle:" << responseDoc;
-            QMessageBox::information(this, "Succès", "Configuration envoyée à la passerelle.");
-        } else {
-            qDebug() << "Erreur lors de l'envoi de la configuration:" << reply->errorString();
-            QMessageBox::critical(this, "Erreur", "Erreur lors de l'envoi de la configuration à la passerelle: " + reply->errorString());
-        }
-        reply->deleteLater();
-    });
+    // Vérification du succès de l'écriture
+    if (success) {
+        qDebug() << "Écriture du registre réussie";
+    } else {
+        qDebug() << "Échec de l'écriture du registre";
+    }
 }
-
-
-
-
-
-
 
 
 void MainWindow::loadJson() {
@@ -256,6 +240,9 @@ void MainWindow::updateValue(QJsonArray &array, int id, const QString &newValue)
 }
 
 void MainWindow::AppliquerModification() {
+
+    ModifieModbus();
+
     QString newName = ui->gatewayNameEdit->text();
     QString newIp = ui->ipAddressEdit->text();
     QString ipGateway = ui->ipAddressPaserelleEdit->text();
@@ -475,42 +462,7 @@ void MainWindow::AppliquerModification() {
 
         db.close();
     }
-    // Sauvegarde du JSON après la tentative de modification de la BDD
     bool jsonSaved = saveJson();
-
-
-
-
-    if (jsonSaved) {
-        auto sendFileContent = [this](const QString& filePath) {
-            QFile file(filePath);
-            if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-                QByteArray jsonData = file.readAll();
-                file.close();
-                QJsonDocument doc = QJsonDocument::fromJson(jsonData);
-                if (!doc.isNull()) {
-                    sendConfigToGateway(doc.object()); // Envoie l'objet racine du JSON
-                } else {
-                    qDebug() << "Erreur lors de la lecture ou de la conversion JSON du fichier:" << filePath;
-                    QMessageBox::warning(this, "Erreur", "Erreur lors de la lecture du fichier JSON: " + filePath);
-                }
-            } else {
-                qDebug() << "Impossible d'ouvrir le fichier:" << filePath;
-                QMessageBox::warning(this, "Erreur", "Impossible d'ouvrir le fichier JSON: " + filePath);
-            }
-        };
-
-        sendFileContent(filePathPaserelle);
-        sendFileContent(filePathModele);
-        sendFileContent(filePathMesure);
-
-        QMessageBox::information(this, "Information", "Les fichiers de configuration JSON ont été envoyés à la passerelle.");
-    } else {
-        QMessageBox::warning(this, "Avertissement", "Erreur lors de la sauvegarde des fichiers JSON. L'envoi à la passerelle a été annulé.");
-    }
-
-
-
 
     if (dbSuccess && jsonSaved && jsonModified) {
         QMessageBox::information(this, "Succès", "Configuration appliquée avec succès.");

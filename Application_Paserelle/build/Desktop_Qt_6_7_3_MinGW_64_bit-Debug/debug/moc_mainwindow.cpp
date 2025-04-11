@@ -49,8 +49,7 @@ constexpr auto qt_meta_stringdata_CLASSMainWindowENDCLASS = QtMocHelpers::string
     "returnButtonClicked2",
     "returnButtonClicked3",
     "saveJson",
-    "sendConfigToGateway",
-    "config"
+    "ModifieModbus"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
@@ -81,7 +80,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
        9,    0,   87,    2, 0x08,    8 /* Private */,
       10,    0,   88,    2, 0x08,    9 /* Private */,
       11,    0,   89,    2, 0x08,   10 /* Private */,
-      12,    1,   90,    2, 0x08,   11 /* Private */,
+      12,    0,   90,    2, 0x08,   11 /* Private */,
 
  // slots: parameters
     QMetaType::Void,
@@ -94,7 +93,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Bool,
-    QMetaType::Void, QMetaType::QJsonObject,   13,
+    QMetaType::Void,
 
        0        // eod
 };
@@ -128,9 +127,8 @@ Q_CONSTINIT const QMetaObject MainWindow::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'saveJson'
         QtPrivate::TypeAndForceComplete<bool, std::false_type>,
-        // method 'sendConfigToGateway'
-        QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        QtPrivate::TypeAndForceComplete<const QJsonObject &, std::false_type>
+        // method 'ModifieModbus'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>
     >,
     nullptr
 } };
@@ -152,7 +150,7 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 8: _t->returnButtonClicked3(); break;
         case 9: { bool _r = _t->saveJson();
             if (_a[0]) *reinterpret_cast< bool*>(_a[0]) = std::move(_r); }  break;
-        case 10: _t->sendConfigToGateway((*reinterpret_cast< std::add_pointer_t<QJsonObject>>(_a[1]))); break;
+        case 10: _t->ModifieModbus(); break;
         default: ;
         }
     }

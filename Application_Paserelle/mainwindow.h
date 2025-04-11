@@ -26,7 +26,7 @@ private slots:
     void returnButtonClicked2();
     void returnButtonClicked3();
     bool saveJson();
-    void sendConfigToGateway(const QJsonObject &config);
+    void ModifieModbus();
 
 private:
     void setupUi();
