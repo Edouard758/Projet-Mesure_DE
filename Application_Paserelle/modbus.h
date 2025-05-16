@@ -11,18 +11,19 @@ public:
     ModbusCommunicator(const QString& serverIp, int port);
     ~ModbusCommunicator();
 
-    uint16_t readModbusRegister(unsigned char* request, int requestSize);  // Méthode pour lire un registre
-    bool writeModbusRegister(unsigned char* request, int requestSize);    // Méthode pour écrire un registre
-    bool isConnected() const;  // Vérifie la connexion
-    void connectToServer();    // Connexion au serveur Modbus
+    bool writeSingleRegister(uint8_t unitId, uint16_t address, uint16_t value);
+    bool writeMultipleRegisters(uint8_t unitId, uint16_t startAddress, const uint16_t* values, int count);
+
+    bool isConnected() const;
 
 private:
-    void initializeWinsock();  // Initialisation de Winsock
-    void disconnectFromServer();  // Déconnexion du serveur
+    void initializeWinsock();
+    void connectToServer();
+    void disconnectFromServer();
 
-    QString serverIp;  // Adresse IP du serveur Modbus
-    int port;  // Port du serveur Modbus
-    SOCKET sock;  // Socket de connexion
+    QString serverIp;
+    int port;
+    SOCKET sock;
 };
 
 #endif // MODBUS_H

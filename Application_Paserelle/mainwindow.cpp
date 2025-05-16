@@ -12,6 +12,7 @@
 #include <QSqlError>
 #include <QDebug>
 #include "modbus.h"
+#include <iostream>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) // <- ici l’ordre est important !
@@ -56,12 +57,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBoxStatus1->setVisible(false);
     ui->comboBoxStatus2->setVisible(false);
     ui->comboBoxStatus3->setVisible(false);
-    ui->comboBoxUsage1->setVisible(false);
-    ui->comboBoxUsage2->setVisible(false);
-    ui->comboBoxUsage3->setVisible(false);
-    ui->usage1->setVisible(false);
-    ui->usage2->setVisible(false);
-    ui->usage3->setVisible(false);
     ui->TypeCharge->setVisible(false);
     ui->comboBoxCharge->setVisible(false);
     ui->PeriodeIntegrationInst->setVisible(false);
@@ -88,6 +83,7 @@ void MainWindow::connectToDatabase() {
 
 void MainWindow::setupUi() {
     connect(ui->AppliquerModification, &QPushButton::clicked, this, &MainWindow::AppliquerModification);
+    connect(ui->AppliquerModification, &QPushButton::clicked, this, &MainWindow::ModifieModbus);
     connect(ui->modifyGatewayButton, &QPushButton::clicked, this, &MainWindow::modifyGatewayButtonClicked);
     connect(ui->acquisitionModelButton, &QPushButton::clicked, this, &MainWindow::acquisitionModelButtonClicked);
     connect(ui->measureModelButton, &QPushButton::clicked, this, &MainWindow::measureModelButtonClicked);
@@ -117,15 +113,6 @@ void MainWindow::setupUi() {
     ui->comboBoxStatus3->addItem("", -1);
     ui->comboBoxStatus3->addItem("Activé", 1);
     ui->comboBoxStatus3->addItem("Desactivé", 0);
-    ui->comboBoxUsage1->addItem("", -1);
-    ui->comboBoxUsage1->addItem("Activé", 1);
-    ui->comboBoxUsage1->addItem("Desactivé", 0);
-    ui->comboBoxUsage2->addItem("", -1);
-    ui->comboBoxUsage2->addItem("Activé", 1);
-    ui->comboBoxUsage2->addItem("Desactivé", 0);
-    ui->comboBoxUsage3->addItem("", -1);
-    ui->comboBoxUsage3->addItem("Activé", 1);
-    ui->comboBoxUsage3->addItem("Desactivé", 0);
     ui->comboBoxCharge->addItem("", -1);
     ui->comboBoxCharge->addItem("monophasé 1P+N-1TC (0)", 0);
     ui->comboBoxCharge->addItem("triphasé 3P+N-3TC (1)", 1);
@@ -137,27 +124,54 @@ void MainWindow::setupUi() {
 }
 
 void MainWindow::ModifieModbus() {
-    ModbusCommunicator modbus("192.168.22.1", 502);  // Connexion au serveur Modbus
+    ModbusCommunicator modbus("192.168.22.1", 502);
 
-    // Requête Modbus pour écrire la valeur "Pe" dans le registre
-    unsigned char modbusRequestWrite[] = {
-        0x00, 0x02,           // Identifiant de transaction (2 octets)
-        0x00, 0x00,           // Protocole (2 octets)
-        0x00, 0x06,           // Longueur du message (2 octets)
-        0xFF, 0x06,           // Adresse de l'esclave (0xFF) et fonction d'écriture (0x06 pour écrire un registre)
-        0x7A, 0x00,           // Adresse du registre à modifier (ici 0x7A00)
-        0x01, 0x00,           // Nombre de registres à écrire (2 registres)
-        0x01, 0x00           // Valeur ASCII de "P" -> 0x50          // Valeur ASCII de "e" -> 0x65
-    };
+    if (!modbus.isConnected()) {
+        qDebug() << "Pas connecté au serveur Modbus";
+        return;
+    }
 
-    // Appel à la fonction pour envoyer la requête Modbus et vérifier si l'écriture est réussie
-    bool success = modbus.writeModbusRegister(modbusRequestWrite, sizeof(modbusRequestWrite));
+    // 1) Écrire "EDOUARO " (8 caractères) à 31232
+    const char* text1 = "EDOUARO ";
+    int length1 = 8;  // multiple de 2
+    int startRegister1 = 31232;
+    int unitId = 255;
 
-    // Vérification du succès de l'écriture
-    if (success) {
-        qDebug() << "Écriture du registre réussie";
+    uint16_t values1[length1 / 2];
+    for (int i = 0; i < length1 / 2; ++i) {
+        values1[i] = (static_cast<uint8_t>(text1[2*i]) << 8) | static_cast<uint8_t>(text1[2*i + 1]);
+    }
+
+    bool success1 = modbus.writeMultipleRegisters(unitId, startRegister1, values1, length1 / 2);
+
+    // 2) Écrire la valeur décimale 1000 dans le registre 58112
+    int startRegister2 = 58112;
+    uint16_t value2 = 1000;
+    bool success2 = modbus.writeSingleRegister(unitId, startRegister2, value2);
+
+    // 3) Écrire "tssnir.local" (11 caractères + 1 nul) à 29194
+    const char* text3 = "tssnir.local";
+    int length3 = 12; // on complète à 12 octets (6 registres)
+    uint8_t tempText3[12] = {0};
+    memcpy(tempText3, text3, 12);  // copie les 11 premiers caractères + '\0' à la fin
+    int startRegister3 = 29194;
+
+    uint16_t values3[length3 / 2];
+    for (int i = 0; i < length3 / 2; ++i) {
+        values3[i] = (static_cast<uint8_t>(tempText3[2*i]) << 8) | static_cast<uint8_t>(tempText3[2*i + 1]);
+    }
+
+    bool success3 = modbus.writeMultipleRegisters(unitId, startRegister3, values3, length3 / 2);
+
+    int startRegister4 = 29190;
+    uint16_t value4 = 1;
+    bool success4 = modbus.writeSingleRegister(unitId, startRegister4, value4);
+
+
+    if (success1 && success2 && success3 && success4) {
+        qDebug() << "Écriture multiple réussie : 'EDOUARO ', 1000, 'tssnir.local', '1'";
     } else {
-        qDebug() << "Échec de l'écriture du registre";
+        qDebug() << "Échec de l'écriture Modbus";
     }
 }
 
@@ -261,9 +275,6 @@ void MainWindow::AppliquerModification() {
     int status1 = ui->comboBoxStatus1->currentData().toInt();
     int status2 = ui->comboBoxStatus2->currentData().toInt();
     int status3 = ui->comboBoxStatus3->currentData().toInt();
-    int usage1 = ui->comboBoxUsage1->currentData().toInt();
-    int usage2 = ui->comboBoxUsage2->currentData().toInt();
-    int usage3= ui->comboBoxUsage3->currentData().toInt();
     int phase= ui->comboBoxCharge->currentData().toInt();
     int idDispositif= ui->PrimaryKey->currentData().toInt();
 
@@ -321,18 +332,6 @@ void MainWindow::AppliquerModification() {
         updateValue(jsonArrayModele, 408128, QString::number(status3));
         jsonModified = true;
     }
-    if (usage1 != -1) {
-        updateValue(jsonArrayModele, 408129, QString::number(usage1));
-        jsonModified = true;
-    }
-    if (usage2 != -1) {
-        updateValue(jsonArrayModele, 408130, QString::number(usage2));
-        jsonModified = true;
-    }
-    if (usage3 != -1) {
-        updateValue(jsonArrayModele, 408131, QString::number(usage3));
-        jsonModified = true;
-    }
     if (phase != -1) {
         updateValue(jsonArrayModele, 408174, QString::number(phase));
         jsonModified = true;
@@ -367,9 +366,6 @@ void MainWindow::AppliquerModification() {
                       "Statut_Capteur_1,"
                       "Statut_Capteur_2,"
                       "Statut_Capteur_3,"
-                      "usage_Capteur_1,"
-                      "usage_Capteur_2,"
-                      "usage_Capteur_3,"
                       "Type_charge,"
                       "Periode_inst,"
                       "Periode_moyenne,"
@@ -389,9 +385,6 @@ void MainWindow::AppliquerModification() {
                       "Statut_Capteur_1 = IFNULL(?, Statut_Capteur_1),"
                       "Statut_Capteur_2 = IFNULL(?, Statut_Capteur_2),"
                       "Statut_Capteur_3 = IFNULL(?, Statut_Capteur_3),"
-                      "usage_Capteur_1 = IFNULL(?, usage_Capteur_1),"
-                      "usage_Capteur_2 = IFNULL(?, usage_Capteur_2),"
-                      "usage_Capteur_3 = IFNULL(?, usage_Capteur_3),"
                       "Type_charge = IFNULL(?, Type_charge),"
                       "Periode_inst = IFNULL(?, Periode_inst),"
                       "Periode_moyenne = IFNULL(?, Periode_moyenne),"
@@ -412,9 +405,6 @@ void MainWindow::AppliquerModification() {
         query.addBindValue(status1 == -1 ? QVariant() : status1);
         query.addBindValue(status2 == -1 ? QVariant() : status2);
         query.addBindValue(status3 == -1 ? QVariant() : status3);
-        query.addBindValue(usage1 == -1 ? QVariant() : usage1);
-        query.addBindValue(usage2 == -1 ? QVariant() : usage2);
-        query.addBindValue(usage3 == -1 ? QVariant() : usage3);
         query.addBindValue(phase == -1 ? QVariant() : phase);
         query.addBindValue(PeriodeIntInst.isEmpty() ? QVariant() : PeriodeIntInst);
         query.addBindValue(PeriodeIntMoy.isEmpty() ? QVariant() : PeriodeIntMoy);
@@ -438,9 +428,6 @@ void MainWindow::AppliquerModification() {
         query.addBindValue(status1 == -1 ? QVariant() : status1);
         query.addBindValue(status2 == -1 ? QVariant() : status2);
         query.addBindValue(status3 == -1 ? QVariant() : status3);
-        query.addBindValue(usage1 == -1 ? QVariant() : usage1);
-        query.addBindValue(usage2 == -1 ? QVariant() : usage2);
-        query.addBindValue(usage3 == -1 ? QVariant() : usage3);
         query.addBindValue(phase == -1 ? QVariant() : phase);
         query.addBindValue(PeriodeIntInst.isEmpty() ? QVariant() : PeriodeIntInst);
         query.addBindValue(PeriodeIntMoy.isEmpty() ? QVariant() : PeriodeIntMoy);
@@ -549,12 +536,6 @@ void MainWindow::acquisitionModelButtonClicked() {
     ui->comboBoxStatus1->setVisible(true);
     ui->comboBoxStatus2->setVisible(true);
     ui->comboBoxStatus3->setVisible(true);
-    ui->comboBoxUsage1->setVisible(true);
-    ui->comboBoxUsage2->setVisible(true);
-    ui->comboBoxUsage3->setVisible(true);
-    ui->usage1->setVisible(true);
-    ui->usage2->setVisible(true);
-    ui->usage3->setVisible(true);
     ui->TypeCharge->setVisible(true);
     ui->comboBoxCharge->setVisible(true);
 }
@@ -574,12 +555,6 @@ void MainWindow::returnButtonClicked2()
     ui->comboBoxStatus1->setVisible(false);
     ui->comboBoxStatus2->setVisible(false);
     ui->comboBoxStatus3->setVisible(false);
-    ui->comboBoxUsage1->setVisible(false);
-    ui->comboBoxUsage2->setVisible(false);
-    ui->comboBoxUsage3->setVisible(false);
-    ui->usage1->setVisible(false);
-    ui->usage2->setVisible(false);
-    ui->usage3->setVisible(false);
     ui->TypeCharge->setVisible(false);
     ui->comboBoxCharge->setVisible(false);
 }

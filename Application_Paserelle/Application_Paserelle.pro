@@ -2,6 +2,7 @@ QT       += core gui
 QT += network
 QT += sql
 LIBS += -lws2_32
+win32:LIBS += -lws2_32
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

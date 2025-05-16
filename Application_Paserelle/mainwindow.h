@@ -31,6 +31,7 @@ private slots:
 private:
     void setupUi();
     void updateValue(QJsonArray &array, int id, const QString &newValue);
+    void modifierRegistreModbus(const QString& adresseIp, int port, quint16 adresseRegistre, const QString& data);
 
     Ui::MainWindow *ui;
     QString filePathPaserelle;
