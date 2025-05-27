@@ -172,7 +172,7 @@ void MainWindow::ModifieModbus() {
     }
 
     QByteArray byteArrayDomaine = DomaineName.toUtf8();
-    int lengthDomaine = 18;
+    int lengthDomaine = 14;
 
     byteArrayDomaine.resize(lengthDomaine);
 
@@ -210,7 +210,7 @@ void MainWindow::ModifieModbus() {
     }
 
     QByteArray byteArrayIP = newIp.toUtf8();
-    int lengthIp = 2;
+    int lengthIp = 4;
 
     byteArrayIP.resize(lengthIp);
 
@@ -307,7 +307,7 @@ void MainWindow::ModifieModbus() {
     }
 
     QByteArray byteArrayAcquisition = newNameModeleAcquisition.toUtf8();
-    int lengthAcquisition = 15;
+    int lengthAcquisition = 10;
 
     byteArrayAcquisition.resize(lengthAcquisition);
 
