@@ -15,8 +15,6 @@ public:
     MainWindow(QWidget *parent = nullptr);
 
 private slots:
-    void loadJson();
-    //void saveJson();
     void AppliquerModification();
     void modifyGatewayButtonClicked();
     void acquisitionModelButtonClicked();
@@ -25,8 +23,10 @@ private slots:
     void connectToDatabase();
     void returnButtonClicked2();
     void returnButtonClicked3();
-    bool saveJson();
+    bool save();
     void ModifieModbus();
+
+    void on_OFFButton_clicked();
 
 private:
     void setupUi();
