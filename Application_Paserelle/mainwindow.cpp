@@ -151,7 +151,7 @@ void MainWindow::ModifieModbus() {
     }
 
     QByteArray byteArrayName = newName.toUtf8();
-    int lengthName = 24;
+    int lengthName = 14;
 
     byteArrayName.resize(lengthName);
 
