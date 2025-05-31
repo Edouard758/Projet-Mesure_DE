@@ -19,11 +19,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     networkManager = new QNetworkAccessManager(this); // Initialisation du gestionnaire réseau
 
-    // Initialisation des chemins
-    filePathPaserelle = "C:/Users/EtudiantIR2/Documents/Application_Paserelle/Json/Paserelle-M50.json";
-    filePathModele = "C:/Users/EtudiantIR2/Documents/Application_Paserelle/Json/modele-acquisition-I-30.json";
-    filePathMesure = "C:/Users/EtudiantIR2/Documents/Application_Paserelle/Json/modele-mesure-U-10.json";
-
     ui->setupUi(this); // toujours après le new Ui::MainWindow
     setupUi();
     connectToDatabase();
