@@ -34,12 +34,6 @@ private:
     void modifierRegistreModbus(const QString& adresseIp, int port, quint16 adresseRegistre, const QString& data);
 
     Ui::MainWindow *ui;
-    QString filePathPaserelle;
-    QString filePathModele;
-    QString filePathMesure;
-    QJsonArray jsonArrayPaserelle;
-    QJsonArray jsonArrayModele;
-    QJsonArray jsonArrayMesure;
     QSqlDatabase db;
     QNetworkAccessManager *networkManager;
 };
