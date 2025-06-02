@@ -3,6 +3,8 @@ QT += network
 QT += sql
 LIBS += -lws2_32
 win32:LIBS += -lws2_32
+RESOURCES += resources.qrc
+INCLUDEPATH += "C:/OpenSSL-Win64/include"
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
