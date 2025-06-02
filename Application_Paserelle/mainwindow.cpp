@@ -13,13 +13,15 @@
 #include <QDebug>
 #include "modbus.h"
 #include <iostream>
+#include <QCryptographicHash>
+#include <QRandomGenerator>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow) // <- ici l’ordre est important !
+    : QMainWindow(parent), ui(new Ui::MainWindow)
 {
-    networkManager = new QNetworkAccessManager(this); // Initialisation du gestionnaire réseau
+    networkManager = new QNetworkAccessManager(this);
 
-    ui->setupUi(this); // toujours après le new Ui::MainWindow
+    ui->setupUi(this);
     setupUi();
     connectToDatabase();
 
@@ -28,12 +30,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->gatewayNameLabel->setVisible(false);
     ui->ipAddressLabel->setVisible(false);
     ui->AppliquerModification->setVisible(false);
-    ui->ipAddressPaserelleLabel->setVisible(false);
+    ui->AppliquerModification_2->setVisible(false);
+    ui->ipAddressPasserelleLabel->setVisible(false);
+    ui->ipAddressPasserelleEdit->setVisible(false);
     ui->ipAddressDNSLabel->setVisible(false);
     ui->ipAddressMaskLabel->setVisible(false);
     ui->DHCPLabel->setVisible(false);
     ui->comboBoxDHCP->setVisible(false);
-    ui->ipAddressPaserelleEdit->setVisible(false);
+    ui->ipAddressMaskEdit->setVisible(false);
     ui->ipAddressMaskEdit->setVisible(false);
     ui->ipAddressDNSEdit->setVisible(false);
     ui->returnButton->setVisible(false);
@@ -41,6 +45,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->NameModeleAquisitionLabel->setVisible(false);
     ui->returnButton2->setVisible(false);
     ui->returnButton3->setVisible(false);
+    ui->returnButton4->setVisible(false);
     ui->TypeCharge->setVisible(false);
     ui->comboBoxCharge->setVisible(false);
     ui->PeriodeIntegrationInst->setVisible(false);
@@ -49,17 +54,27 @@ MainWindow::MainWindow(QWidget *parent)
     ui->PeriodeIntegrationMoyEdit->setVisible(false);
     ui->NameDomaineEdit->setVisible(false);
     ui->NameDomaine->setVisible(false);
+    ui->idClientEdit->setVisible(false);
+    ui->idClientLabel->setVisible(false);
+    ui->MDPEdit->setVisible(false);
+    ui->MDPLabel->setVisible(false);
+    ui->showHideButton->setVisible(false);
+    connect(ui->showHideButton, &QPushButton::clicked, this, &MainWindow::on_pushButton_clicked);
+    ui->showHideButton->setIcon(QIcon("C:/Users/EtudiantIR2/Documents/Appli_BDD/preview-show-interface-icon-free-vector.jpg"));
+    ui->showHideButton->setIconSize(QSize(26, 26)); // Définir la taille de l'icône
 }
 
-void MainWindow::connectToDatabase() {
+void MainWindow::connectToDatabase()
+{
     db = QSqlDatabase::addDatabase("QODBC");
-    QString connectionString = "DRIVER={MySQL ODBC 9.2 ANSI Driver};SERVER=192.168.17.2;DATABASE=Mesure_De;UID=admin;PWD=admin;";
-    db.setDatabaseName(connectionString);
+    db.setDatabaseName("Bdd");
+    db.setUserName("admin");
+    db.setPassword("admin");
+    QMessageBox::information(this, "Succes", QString("Connection à la base de donnée réussit"));
 
-    if (db.open()) {
-        QMessageBox::information(this, "Connexion réussie", "Connexion à la base de données MySQL établie.");
-    } else {
-        QMessageBox::critical(this, "Erreur de base de données", "Connexion échouée : " + db.lastError().text());
+    if (!db.open()) {
+        QSqlError error = db.lastError();
+        QMessageBox::critical(this, "Erreur", QString("Impossible de se connecter à la base de données. Erreur: %1").arg(error.text()));
     }
 }
 
@@ -112,7 +127,30 @@ void MainWindow::on_OFFButton_clicked()
         qDebug() << "La passerelle redemarre ";
     }
 }
+void writeIpAddress(ModbusCommunicator& modbus, const QString& ipString, int startRegister, int unitID) {
+    if (ipString.trimmed().isEmpty())
+        return;
 
+    QHostAddress ipAddr(ipString);
+    if (ipAddr.protocol() != QAbstractSocket::IPv4Protocol) {
+        qDebug() << "Adresse IP invalide :" << ipString;
+        return;
+    }
+
+    quint32 ip = ipAddr.toIPv4Address(); // Convertit en 32 bits (IPv4)
+
+    std::vector<uint16_t> registers(2);
+    // Encodage big-endian : haut 16 bits puis bas 16 bits
+    registers[0] = static_cast<uint16_t>((ip >> 16) & 0xFFFF);
+    registers[1] = static_cast<uint16_t>(ip & 0xFFFF);
+
+    bool success = modbus.writeMultipleRegisters(unitID, startRegister, registers.data(), registers.size());
+    if (!success) {
+        qDebug() << "Échec de l'écriture de l'adresse IP" << ipString << "au registre" << startRegister;
+    } else {
+        qDebug() << "Adresse IP" << ipString << "écrite avec succès au registre" << startRegister;
+    }
+}
 
 void MainWindow::ModifieModbus() {
     ModbusCommunicator modbus("192.168.22.1", 502);
@@ -135,59 +173,54 @@ void MainWindow::ModifieModbus() {
     qDebug() << "La valeur instantaner est :" << PeriodeIntInst;
 
 
-
-
-
-
     // 1) Écriture du nouveau nom dans les registres à partir de 31232
-    // Conversion du QString newName en tableau de valeurs 16 bits pour Modbus
-    if (newName.length() % 2 != 0) {
-        newName.append('\0');
+    if (!newName.trimmed().isEmpty()) {
+        if (newName.length() % 2 != 0) {
+            newName.append('\0');
+        }
+
+        QByteArray byteArrayName = newName.toUtf8();
+        int lengthName = 14;
+
+        byteArrayName.resize(lengthName);
+
+        std::vector<uint16_t> modbusValuesName(lengthName / 2);
+
+        for (int i = 0; i < lengthName / 2; ++i) {
+            modbusValuesName[i] = (static_cast<uint8_t>(byteArrayName[2*i]) << 8) | static_cast<uint8_t>(byteArrayName[2*i + 1]);
+        }
+
+        int startRegisterName = 31232;
+        modbus.writeMultipleRegisters(unitID, startRegisterName, modbusValuesName.data(), modbusValuesName.size());
     }
 
-    QByteArray byteArrayName = newName.toUtf8();
-    int lengthName = 14;
+    // 2) Ecriture du nouveau domaine dans les registre a partir de 29194
+    if (!DomaineName.trimmed().isEmpty()) {
+        if (DomaineName.length() % 2 != 0) {
+            DomaineName.append('\0');
+        }
 
-    byteArrayName.resize(lengthName);
+        QByteArray byteArrayDomaine = DomaineName.toUtf8();
+        int lengthDomaine = 14;
 
-    std::vector<uint16_t> modbusValuesName(lengthName / 2);
+        byteArrayDomaine.resize(lengthDomaine);
 
-    for (int i = 0; i < lengthName / 2; ++i) {
-        modbusValuesName[i] = (static_cast<uint8_t>(byteArrayName[2*i]) << 8) | static_cast<uint8_t>(byteArrayName[2*i + 1]);
+        std::vector<uint16_t> domaineValues(lengthDomaine / 2);
+
+        for (int i = 0; i < lengthDomaine / 2; ++i) {
+            domaineValues[i] = (static_cast<uint8_t>(byteArrayDomaine[2*i]) << 8) | static_cast<uint8_t>(byteArrayDomaine[2*i + 1]);
+        }
+
+        int startRegister2 = 29194;
+        modbus.writeMultipleRegisters(unitID, startRegister2, domaineValues.data(), domaineValues.size());
     }
 
-    int startRegisterName = 31232;
-    modbus.writeMultipleRegisters(unitID, startRegisterName, modbusValuesName.data(), modbusValuesName.size());
-
-
-
-    // 2)Ecriture du nouveau domaine dans les registre a partir de 29194
-    if (DomaineName.length() % 2 != 0) {
-        DomaineName.append('\0');
-    }
-
-    QByteArray byteArrayDomaine = DomaineName.toUtf8();
-    int lengthDomaine = 14;
-
-    byteArrayDomaine.resize(lengthDomaine);
-
-    std::vector<uint16_t> domaineValues(lengthDomaine / 2);
-
-    for (int i = 0; i < lengthDomaine / 2; ++i) {
-        domaineValues[i] = (static_cast<uint8_t>(byteArrayDomaine[2*i]) << 8) | static_cast<uint8_t>(byteArrayDomaine[2*i + 1]);
-    }
-
-    int startRegister2 = 29194;
-    modbus.writeMultipleRegisters(unitID, startRegister2, domaineValues.data(), domaineValues.size());
-
-
-
-    //3)Ecriture du DHCP
-    int dhcpIndex = DHCP; // DHCP est la variable contenant l'index du ComboBox
+    // 3) Ecriture du DHCP
+    int dhcpIndex = DHCP;
 
     if (dhcpIndex == 0 || dhcpIndex == 1) {
         int startRegister = 29190;
-        uint16_t value = static_cast<uint16_t>(dhcpIndex); // 0 ou 1
+        uint16_t value = static_cast<uint16_t>(dhcpIndex);
         bool success = modbus.writeSingleRegister(unitID, startRegister, value);
 
         if (!success) {
@@ -199,88 +232,23 @@ void MainWindow::ModifieModbus() {
         qDebug() << "DHCP non sélectionné, aucun envoi Modbus effectué.";
     }
 
-    //4)ecriture de l'adresse Ip
-    if (newIp.length() % 2 != 0) {
-        newIp.append('\0');
-    }
+    // 4) Adresse IP
+    if (!newIp.trimmed().isEmpty())
+        writeIpAddress(modbus, newIp, 29184, unitID);
 
-    QByteArray byteArrayIP = newIp.toUtf8();
-    int lengthIp = 4;
+    // 5) Masque
+    if (!ipMask.trimmed().isEmpty())
+        writeIpAddress(modbus, ipMask, 29186, unitID);
 
-    byteArrayIP.resize(lengthIp);
+    // 6) Passerelle
+    if (!ipGateway.trimmed().isEmpty())
+        writeIpAddress(modbus, ipGateway, 29188, unitID);
 
-    std::vector<uint16_t> modbusValuesIp(lengthIp / 2);
-
-    for (int i = 0; i < lengthIp / 2; ++i) {
-        modbusValuesIp[i] = (static_cast<uint8_t>(byteArrayIP[2*i]) << 8) | static_cast<uint8_t>(byteArrayIP[2*i + 1]);
-    }
-
-    long startRegisterIp = 29184;
-    modbus.writeMultipleRegisters(unitID, startRegisterIp, modbusValuesIp.data(), modbusValuesIp.size());
-
-    //5)ecriture de l'adresse de la paserelle
-    if (ipGateway.length() % 2 != 0) {
-        ipGateway.append('\0');
-    }
-
-    QByteArray byteArrayPasserelle = ipGateway.toUtf8();
-    int lengthpasserelle = 4;
-
-    byteArrayPasserelle.resize(lengthpasserelle);
-
-    std::vector<uint16_t> modbusValuesPasserelle(lengthpasserelle / 2);
-
-    for (int i = 0; i < lengthpasserelle / 2; ++i) {
-        modbusValuesPasserelle[i] = (static_cast<uint8_t>(byteArrayPasserelle[2*i]) << 8) | static_cast<uint8_t>(byteArrayPasserelle[2*i + 1]);
-    }
-
-    long startRegisterPasserelle = 29188 ;
-    modbus.writeMultipleRegisters(unitID, startRegisterPasserelle, modbusValuesPasserelle.data(), modbusValuesPasserelle.size());
-
-
-    //6)ecriture de l'adresse du DNS
-    if (ipDNS.length() % 2 != 0) {
-        ipDNS.append('\0');
-    }
-
-    QByteArray byteArrayDNS= ipDNS.toUtf8();
-    int lengthDNS = 4;
-
-    byteArrayDNS.resize(lengthDNS);
-
-    std::vector<uint16_t> modbusValuesDNS(lengthDNS / 2);
-
-    for (int i = 0; i < lengthDNS / 2; ++i) {
-        modbusValuesDNS[i] = (static_cast<uint8_t>(byteArrayDNS[2*i]) << 8) | static_cast<uint8_t>(byteArrayDNS[2*i + 1]);
-    }
-
-    long startRegisterDNS = 29192 ;
-    modbus.writeMultipleRegisters(unitID, startRegisterDNS, modbusValuesDNS.data(), modbusValuesDNS.size());
-
-
-    //7)ecriture du Mask
-    if (ipMask.length() % 2 != 0) {
-        ipMask.append('\0');
-    }
-
-    QByteArray byteArrayMask= ipMask.toUtf8();
-    int lengthMask = 4;
-
-    byteArrayMask.resize(lengthMask);
-
-    std::vector<uint16_t> modbusValuesMask(lengthMask / 2);
-
-    for (int i = 0; i < lengthMask / 2; ++i) {
-        modbusValuesMask[i] = (static_cast<uint8_t>(byteArrayMask[2*i]) << 8) | static_cast<uint8_t>(byteArrayMask[2*i + 1]);
-    }
-
-    long startRegisterMask = 29186 ;
-    modbus.writeMultipleRegisters(unitID, startRegisterMask, modbusValuesMask.data(), modbusValuesMask.size());
-
-
-
-    //8)Ecriture de la phase
-    int phaseIndex = phase; // 'phase' contient l'index du ComboBox
+    // 7 )DNS
+    if (!ipDNS.trimmed().isEmpty())
+        writeIpAddress(modbus, ipDNS, 29192, unitID);
+    // 8) Ecriture de la phase
+    int phaseIndex = phase;
 
     if (phaseIndex == 0 || phaseIndex == 1) {
         int startRegister = 13825;
@@ -296,62 +264,68 @@ void MainWindow::ModifieModbus() {
         qDebug() << "Phase non sélectionnée, aucun envoi Modbus effectué.";
     }
 
-    //9)ecriture du modele d'acquisition
-    if (newNameModeleAcquisition.length() % 2 != 0) {
-        newNameModeleAcquisition.append('\0');
+    // 9) Ecriture du modèle d'acquisition
+    if (!newNameModeleAcquisition.trimmed().isEmpty()) {
+        if (newNameModeleAcquisition.length() % 2 != 0) {
+            newNameModeleAcquisition.append('\0');
+        }
+
+        QByteArray byteArrayAcquisition = newNameModeleAcquisition.toUtf8();
+        int lengthAcquisition = 10;
+
+        byteArrayAcquisition.resize(lengthAcquisition);
+
+        std::vector<uint16_t> modbusValuesAcquisition(lengthAcquisition / 2);
+
+        for (int i = 0; i < lengthAcquisition / 2; ++i) {
+            modbusValuesAcquisition[i] = (static_cast<uint8_t>(byteArrayAcquisition[2*i]) << 8) | static_cast<uint8_t>(byteArrayAcquisition[2*i + 1]);
+        }
+
+        long startRegisterAcquisition = 46592;
+        modbus.writeMultipleRegisters(unitID2, startRegisterAcquisition, modbusValuesAcquisition.data(), modbusValuesAcquisition.size());
     }
 
-    QByteArray byteArrayAcquisition = newNameModeleAcquisition.toUtf8();
-    int lengthAcquisition = 10;
+    // 10) Ecriture de la valeur instantanée
+    if (!PeriodeIntInst.trimmed().isEmpty()) {
+        if (PeriodeIntInst.length() % 2 != 0) {
+            PeriodeIntInst.append('\0');
+        }
 
-    byteArrayAcquisition.resize(lengthAcquisition);
+        QByteArray byteArrayIntInst = PeriodeIntInst.toUtf8();
+        int lengthIntInst = 2;
 
-    std::vector<uint16_t> modbusValuesAcquisition(lengthAcquisition / 2);
+        byteArrayIntInst.resize(lengthIntInst);
 
-    for (int i = 0; i < lengthAcquisition / 2; ++i) {
-        modbusValuesAcquisition[i] = (static_cast<uint8_t>(byteArrayAcquisition[2*i]) << 8) | static_cast<uint8_t>(byteArrayAcquisition[2*i + 1]);
+        std::vector<uint16_t> modbusValuesIntInst(lengthIntInst / 2);
+
+        for (int i = 0; i < lengthIntInst / 2; ++i) {
+            modbusValuesIntInst[i] = (static_cast<uint8_t>(byteArrayIntInst[2*i]) << 8) | static_cast<uint8_t>(byteArrayIntInst[2*i + 1]);
+        }
+
+        long startRegisterIntInst = 34816;
+        modbus.writeMultipleRegisters(unitID3, startRegisterIntInst, modbusValuesIntInst.data(), modbusValuesIntInst.size());
     }
 
-    long startRegisterAcquisition = 46592;
-    modbus.writeMultipleRegisters(unitID2, startRegisterAcquisition, modbusValuesAcquisition.data(), modbusValuesAcquisition.size());
+    // 11) Ecriture de la valeur moyenne
+    if (!PeriodeIntMoy.trimmed().isEmpty()) {
+        if (PeriodeIntMoy.length() % 2 != 0) {
+            PeriodeIntMoy.append('\0');
+        }
 
-    //10)ecriture du valeur instantanée
-    if (PeriodeIntInst.length() % 2 != 0) {
-        PeriodeIntInst.append('\0');
+        QByteArray byteArrayMoyenne = PeriodeIntMoy.toUtf8();
+        int lengthMoyenne = 2;
+
+        byteArrayMoyenne.resize(lengthMoyenne);
+
+        std::vector<uint16_t> modbusValuesMoyenne(lengthMoyenne / 2);
+
+        for (int i = 0; i < lengthMoyenne / 2; ++i) {
+            modbusValuesMoyenne[i] = (static_cast<uint8_t>(byteArrayMoyenne[2*i]) << 8) | static_cast<uint8_t>(byteArrayMoyenne[2*i + 1]);
+        }
+
+        long startRegisterMoyenne = 34817;
+        modbus.writeMultipleRegisters(unitID3, startRegisterMoyenne, modbusValuesMoyenne.data(), modbusValuesMoyenne.size());
     }
-
-    QByteArray byteArrayIntInst = PeriodeIntInst.toUtf8();
-    int lengthIntInst = 2;
-
-    byteArrayIntInst.resize(lengthIntInst);
-
-    std::vector<uint16_t> modbusValuesIntInst(lengthIntInst / 2);
-
-    for (int i = 0; i < lengthIntInst / 2; ++i) {
-        modbusValuesIntInst[i] = (static_cast<uint8_t>(byteArrayIntInst[2*i]) << 8) | static_cast<uint8_t>(byteArrayIntInst[2*i + 1]);
-    }
-
-    long startRegisterIntInst = 34816;
-    modbus.writeMultipleRegisters(unitID3, startRegisterIntInst, modbusValuesIntInst.data(), modbusValuesIntInst.size());
-
-
-    //11)ecriture du valeur moyenne
-    if (PeriodeIntMoy.length() % 2 != 0) {
-        PeriodeIntMoy.append('\0');
-    }
-
-    QByteArray byteArrayMoyenne = PeriodeIntInst.toUtf8();
-    int lengthMoyenne = 2;
-
-    byteArrayMoyenne.resize(lengthMoyenne);
-
-    std::vector<uint16_t> modbusValuesMoyenne(lengthMoyenne / 2);
-
-    for (int i = 0; i < lengthMoyenne / 2; ++i) {
-        modbusValuesMoyenne[i] = (static_cast<uint8_t>(byteArrayMoyenne[2*i]) << 8) | static_cast<uint8_t>(byteArrayMoyenne[2*i + 1]);
-    }
-    long startRegisterMoyenne = 34817;
-    modbus.writeMultipleRegisters(unitID3, startRegisterMoyenne, modbusValuesMoyenne.data(), modbusValuesMoyenne.size());
 
     // 12) Écriture de la valeur entière 161 dans le registre 58112
     /*
@@ -364,35 +338,90 @@ void MainWindow::ModifieModbus() {
     } else {
         qDebug() << "Échec de l'écriture Modbus";
     }
-*/
-
+    */
 }
+
 
 void MainWindow::AppliquerModification() {
 
-    newName = ui->gatewayNameEdit->text();
-    DomaineName = ui->NameDomaineEdit->text();
-    newIp = ui->ipAddressEdit->text();
-    ipGateway = ui->ipAddressPaserelleEdit->text();
-    ipMask = ui->ipAddressMaskEdit->text();
-    ipDNS = ui->ipAddressDNSEdit->text();
-    newNameModeleAcquisition = ui->NameModeleAcquisitionEdit->text();
-    PeriodeIntInst = ui->PeriodeIntegrationInstEdit->text();
-    PeriodeIntMoy = ui->PeriodeIntegrationMoyEdit->text();
+    // Mise à jour des variables globales uniquement si le champ utilisateur n’est pas vide
+    QString tempName = ui->gatewayNameEdit->text().trimmed();
+    if (!tempName.isEmpty()) newName = tempName;
 
+    QString tempDomaine = ui->NameDomaineEdit->text().trimmed();
+    if (!tempDomaine.isEmpty()) DomaineName = tempDomaine;
 
+    QString tempIp = ui->ipAddressEdit->text().trimmed();
+    if (!tempIp.isEmpty()) newIp = tempIp;
+
+    QString tempGateway = ui->ipAddressPasserelleEdit->text().trimmed();
+    if (!tempGateway.isEmpty()) ipGateway = tempGateway;
+
+    QString tempMask = ui->ipAddressMaskEdit->text().trimmed();
+    if (!tempMask.isEmpty()) ipMask = tempMask;
+
+    QString tempDNS = ui->ipAddressDNSEdit->text().trimmed();
+    if (!tempDNS.isEmpty()) ipDNS = tempDNS;
+
+    QString tempModele = ui->NameModeleAcquisitionEdit->text().trimmed();
+    if (!tempModele.isEmpty()) newNameModeleAcquisition = tempModele;
+
+    QString tempInst = ui->PeriodeIntegrationInstEdit->text().trimmed();
+    if (!tempInst.isEmpty()) PeriodeIntInst = tempInst;
+
+    QString tempMoy = ui->PeriodeIntegrationMoyEdit->text().trimmed();
+    if (!tempMoy.isEmpty()) PeriodeIntMoy = tempMoy;
 
     phase= ui->comboBoxCharge->currentData().toInt();
     DHCP = ui->comboBoxDHCP->currentData().toInt();
     int idDispositif= ui->PrimaryKey->currentData().toInt();
+    QString idClient = ui->idClientEdit->text();
+
 
     ModifieModbus();
 
-    bool dbSuccess = false;
+    if (idDispositif == -1)
+    {
+        QMessageBox::warning(this, "Avertissement", "Veuillez sélectionner un ID de Dispositif.");
+        return;
+    }
+
+    if (idDispositif == 0)
+    {
+        QSqlQuery queryProtocole(db);
+        queryProtocole.prepare("UPDATE `Dispositif_Passerelle` SET `ID_Protocole_FK` = '0' WHERE `Dispositif_Passerelle`.`ID_Dispositif_PK` = 0;");
+        queryProtocole.addBindValue(idDispositif == -1 ? QVariant() : idDispositif);
+
+        if (!queryProtocole.exec())
+        {
+            QSqlError error = queryProtocole.lastError();
+            QMessageBox::critical(this, "Erreur SQL", QString("Erreur lors de la modification de l'ID Protocole: %1").arg(error.text()));
+            qDebug() << "Erreur SQL (ID Protocole):" << error.text() << " Requête: " << queryProtocole.lastQuery();
+        } else {
+            QMessageBox::information(this, "Succès", "Type de Protocole envoyer");
+        }
+    }
+
+    if (idDispositif == 1)
+    {
+        QSqlQuery queryProtocole(db);
+        queryProtocole.prepare("UPDATE `Dispositif_Passerelle` SET `ID_Protocole_FK` = '1' WHERE `Dispositif_Passerelle`.`ID_Dispositif_PK` = 1;");
+        queryProtocole.addBindValue(idDispositif == -1 ? QVariant() : idDispositif);
+
+        if (!queryProtocole.exec()) {
+            QSqlError error = queryProtocole.lastError();
+            QMessageBox::critical(this, "Erreur SQL", QString("Erreur lors de la modification de l'ID Protocole: %1").arg(error.text()));
+            qDebug() << "Erreur SQL (ID Protocole):" << error.text() << " Requête: " << queryProtocole.lastQuery();
+        } else {
+            QMessageBox::information(this, "Succès", "Type de Protocole envoyer");
+        }
+    }
+
     if (db.open()) {
         QSqlQuery query(db);
         query.prepare("INSERT INTO Dispositif_Passerelle (ID_Dispositif_PK,"
                       "Nom_dispositif,"
+                      "ID_Client_FK,"
                       "Adresse_IP_Passerelle,"
                       "Adresse_gateway_Passerelle,"
                       "Adresse_mask_gateway_Passerelle,"
@@ -402,10 +431,11 @@ void MainWindow::AppliquerModification() {
                       "Nom_model_acquisition,"
                       "Type_charge,"
                       "Periode_inst,"
-                      "Periode_moyenne,"
-                      "VALUES (?,?,?,?,?,?,?,?,?,?,?,?) "
+                      "Periode_moyenne)"
+                      "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) "
                       "ON DUPLICATE KEY UPDATE "
                       "Nom_dispositif = IFNULL(?, Nom_dispositif),"
+                      "ID_Client_FK = IFNULL(?, ID_Client_FK),"
                       "Adresse_IP_Passerelle = IFNULL(?, Adresse_IP_Passerelle),"
                       "Adresse_gateway_Passerelle = IFNULL(?, Adresse_gateway_Passerelle),"
                       "Adresse_mask_gateway_Passerelle = IFNULL(?, Adresse_mask_gateway_Passerelle),"
@@ -415,11 +445,12 @@ void MainWindow::AppliquerModification() {
                       "Nom_model_acquisition = IFNULL(?, Nom_model_acquisition),"
                       "Type_charge = IFNULL(?, Type_charge),"
                       "Periode_inst = IFNULL(?, Periode_inst),"
-                      "Periode_moyenne = IFNULL(?, Periode_moyenne),");
+                      "Periode_moyenne = IFNULL(?, Periode_moyenne);");
 
         // Première série de addBindValue() : Pour l'instruction INSERT et les valeurs à insérer si la ligne n'existe pas.
         query.addBindValue(idDispositif);
         query.addBindValue(newName.isEmpty() ? QVariant() : newName);
+        query.addBindValue(idClient.isEmpty() ? QVariant() : idClient);
         query.addBindValue(newIp.isEmpty() ? QVariant() : newIp);
         query.addBindValue(ipGateway.isEmpty() ? QVariant() : ipGateway);
         query.addBindValue(ipMask.isEmpty() ? QVariant() : ipMask);
@@ -437,6 +468,7 @@ void MainWindow::AppliquerModification() {
         // Il faut au moin une valeur dans un autre attribut pour que la nouvelle table soit crée
 
         query.addBindValue(newName.isEmpty() ? QVariant() : newName);
+        query.addBindValue(idClient.isEmpty() ? QVariant() : idClient);
         query.addBindValue(newIp.isEmpty() ? QVariant() : newIp);
         query.addBindValue(ipGateway.isEmpty() ? QVariant() : ipGateway);
         query.addBindValue(ipMask.isEmpty() ? QVariant() : ipMask);
@@ -448,6 +480,8 @@ void MainWindow::AppliquerModification() {
         query.addBindValue(PeriodeIntInst.isEmpty() ? QVariant() : PeriodeIntInst);
         query.addBindValue(PeriodeIntMoy.isEmpty() ? QVariant() : PeriodeIntMoy);
 
+
+
         // La seconde série de query.addBindValue() fournit les valeurs qui seront utilisées pour mettre à jour la ligne existante
         // dans la table Dispositif_Passerelle si une ligne avec la même clé primaire (ID_Dispositif_PK) existe déjà.
         // Ces valeurs sont associées aux ? dans la clause ON DUPLICATE KEY UPDATE Nom_dispositif = IFNULL(?, Nom_dispositif), ....
@@ -458,16 +492,91 @@ void MainWindow::AppliquerModification() {
         // (l'utilisateur a entré ou sélectionné quelque chose), alors cette nouvelle valeur sera utilisée pour la mise à jour.
 
 
-        if (query.exec()) {
-            dbSuccess = true;
+        if (!query.exec()) {
+            QSqlError error = query.lastError();
+            QMessageBox::critical(this, "Erreur SQL", QString("requete échoué"));
+            qDebug() << "Erreur SQL (AppliquerModification):" << error.text() << " Requête: " << query.lastQuery();
+        } else {
+            QMessageBox::information(this, "Succès", "Données mises à jour avec succès.");
         }
-        db.close();
-    }
-
-    if (dbSuccess) {
-        QMessageBox::information(this, "Succès", "Configuration appliquée avec succès.");
     }
 }
+
+
+void MainWindow::on_AppliquerModification_2_clicked()
+{
+    QString idClient = ui->idClientEdit->text();
+    QString MDP = ui->MDPEdit->text(); // Mot de passe en clair
+    int idDispositif = ui->PrimaryKey->currentData().toInt();
+
+    // Vérifications d'entrée
+    if (idDispositif == -1)
+    {
+        QMessageBox::warning(this, "Avertissement", "Veuillez sélectionner un ID de Dispositif.");
+        return;
+    }
+
+    if (idClient.isEmpty())
+    {
+        QMessageBox::warning(this, "Avertissement", "Veuillez saisir un ID client.");
+        return;
+    }
+
+    if (MDP.isEmpty())
+    {
+        QMessageBox::warning(this, "Avertissement", "Veuillez saisir un Mot de passe.");
+        return;
+    }
+    quint64 randValue = QRandomGenerator::system()->generate64();
+    QByteArray sel = QByteArray::number(randValue).toHex();
+
+    QByteArray mdpSale = MDP.toUtf8() + sel;
+    QByteArray hash = QCryptographicHash::hash(mdpSale, QCryptographicHash::Sha256).toHex();
+
+    QSqlQuery queryClientWeb(db);
+    queryClientWeb.prepare("INSERT INTO Client_Web (`ID_Client_PK`, `Mot_de_passe`, `Salt`) VALUES (?, ?, ?) "
+                           "ON DUPLICATE KEY UPDATE "
+                           "Mot_de_passe = ?, Salt = ?;");
+
+    // Liaison des valeurs pour INSERT et UPDATE
+    queryClientWeb.addBindValue(idClient);
+    queryClientWeb.addBindValue(hash);
+    queryClientWeb.addBindValue(sel);
+
+    queryClientWeb.addBindValue(hash);
+    queryClientWeb.addBindValue(sel);
+
+    qDebug() << "ID:" << idClient << "HASH:" << hash << "SEL:" << sel;
+
+    if (!queryClientWeb.exec())
+    {
+        QSqlError error = queryClientWeb.lastError();
+        QMessageBox::critical(this, "Erreur SQL", QString("Erreur lors de la modification du Client Web: %1").arg(error.text()));
+        qDebug() << "Erreur SQL (Client Web):" << error.text() << " Requête: " << queryClientWeb.lastQuery();
+        return;
+    } else {
+        QMessageBox::information(this, "Succès", "Information Client mise à jour dans Client_Web.");
+    }
+}
+
+
+void MainWindow::on_pushButton_clicked()
+{
+    if (passwordVisible)
+    {
+        // Le mot de passe est actuellement visible, masquez-le
+        ui->MDPEdit->setEchoMode(QLineEdit::Password);
+        ui->showHideButton->setIcon(QIcon("C:/Users/EtudiantIR2/Documents/Appli_BDD/preview-show-interface-icon-free-vector.jpg")); // Icône "œil fermé"
+        passwordVisible = false;
+    } else
+    {
+        // Le mot de passe est actuellement masqué, affichez-le
+        ui->MDPEdit->setEchoMode(QLineEdit::Normal);
+        ui->showHideButton->setIcon(QIcon("C:/Users/EtudiantIR2/Documents/Appli_BDD/eye-slash-icon-symbol-design-illustration-vector.jpg")); // Icône "œil ouvert" ou "œil barré"
+        passwordVisible = true;
+    }
+}
+
 
 bool MainWindow::save() {
     int idDispositif= ui->PrimaryKey->currentData().toInt();
@@ -482,21 +591,57 @@ void MainWindow::modifyGatewayButtonClicked() {
     ui->ipAddressEdit->setVisible(true);
     ui->gatewayNameLabel->setVisible(true);
     ui->ipAddressLabel->setVisible(true);
-    ui->AppliquerModification->setVisible(true);
+    ui->AppliquerModification->setVisible(false);
     ui->returnButton->setVisible(true);
     ui->modifyGatewayButton->setVisible(false);
     ui->acquisitionModelButton->setVisible(false);
     ui->measureModelButton->setVisible(false);
-    ui->ipAddressPaserelleLabel->setVisible(true);
+    ui->ipAddressPasserelleLabel->setVisible(true);
     ui->ipAddressDNSLabel->setVisible(true);
     ui->ipAddressMaskLabel->setVisible(true);
     ui->DHCPLabel->setVisible(true);
     ui->comboBoxDHCP->setVisible(true);
-    ui->ipAddressPaserelleEdit->setVisible(true);
+    ui->ipAddressPasserelleEdit->setVisible(true);
     ui->ipAddressMaskEdit->setVisible(true);
     ui->ipAddressDNSEdit->setVisible(true);
     ui->NameDomaineEdit->setVisible(true);
     ui->NameDomaine->setVisible(true);
+    ui->OFFButton->setVisible(false);
+    ui->PrimaryKey->setVisible(false);
+    ui->PrimaryKeylabel->setVisible(false);
+    ui->ClientWebButton->setVisible(false);
+}
+
+void MainWindow::acquisitionModelButtonClicked() {
+    ui->NameModeleAcquisitionEdit->setVisible(true);
+    ui->NameModeleAquisitionLabel->setVisible(true);
+    ui->AppliquerModification->setVisible(false);
+    ui->modifyGatewayButton->setVisible(false);
+    ui->acquisitionModelButton->setVisible(false);
+    ui->measureModelButton->setVisible(false);
+    ui->returnButton2->setVisible(true);
+    ui->TypeCharge->setVisible(true);
+    ui->comboBoxCharge->setVisible(true);
+    ui->OFFButton->setVisible(false);
+    ui->PrimaryKey->setVisible(false);
+    ui->PrimaryKeylabel->setVisible(false);
+    ui->ClientWebButton->setVisible(false);
+}
+
+void MainWindow::measureModelButtonClicked() {;
+    ui->returnButton3->setVisible(true);
+    ui->AppliquerModification->setVisible(false);
+    ui->modifyGatewayButton->setVisible(false);
+    ui->acquisitionModelButton->setVisible(false);
+    ui->measureModelButton->setVisible(false);
+    ui->PeriodeIntegrationInst->setVisible(true);
+    ui->PeriodeIntegrationInstEdit->setVisible(true);
+    ui->PeriodeIntegrationMoy->setVisible(true);
+    ui->PeriodeIntegrationMoyEdit->setVisible(true);
+    ui->OFFButton->setVisible(false);
+    ui->PrimaryKey->setVisible(false);
+    ui->PrimaryKeylabel->setVisible(false);
+    ui->ClientWebButton->setVisible(false);
 }
 
 void MainWindow::returnButtonClicked() {
@@ -504,70 +649,115 @@ void MainWindow::returnButtonClicked() {
     ui->ipAddressEdit->setVisible(false);
     ui->gatewayNameLabel->setVisible(false);
     ui->ipAddressLabel->setVisible(false);
-    ui->AppliquerModification->setVisible(false);
     ui->returnButton->setVisible(false);
     ui->modifyGatewayButton->setVisible(true);
     ui->acquisitionModelButton->setVisible(true);
     ui->measureModelButton->setVisible(true);
-    ui->ipAddressPaserelleLabel->setVisible(false);
+    ui->ipAddressPasserelleLabel->setVisible(false);
     ui->ipAddressDNSLabel->setVisible(false);
     ui->ipAddressMaskLabel->setVisible(false);
     ui->DHCPLabel->setVisible(false);
     ui->comboBoxDHCP->setVisible(false);
-    ui->ipAddressPaserelleEdit->setVisible(false);
+    ui->ipAddressPasserelleEdit->setVisible(false);
     ui->ipAddressMaskEdit->setVisible(false);
     ui->ipAddressDNSEdit->setVisible(false);
     ui->NameDomaineEdit->setVisible(false);
     ui->NameDomaine->setVisible(false);
-}
-
-void MainWindow::acquisitionModelButtonClicked() {
-    ui->NameModeleAcquisitionEdit->setVisible(true);
-    ui->NameModeleAquisitionLabel->setVisible(true);
-    ui->modifyGatewayButton->setVisible(false);
-    ui->acquisitionModelButton->setVisible(false);
-    ui->measureModelButton->setVisible(false);
-    ui->returnButton2->setVisible(true);
+    ui->OFFButton->setVisible(true);
+    ui->PrimaryKey->setVisible(true);
+    ui->PrimaryKeylabel->setVisible(true);
     ui->AppliquerModification->setVisible(true);
-    ui->TypeCharge->setVisible(true);
-    ui->comboBoxCharge->setVisible(true);
+    ui->ClientWebButton->setVisible(true);
 }
 
 void MainWindow::returnButtonClicked2()
 {
     ui->modifyGatewayButton->setVisible(true);
+    ui->AppliquerModification->setVisible(true);
     ui->acquisitionModelButton->setVisible(true);
     ui->measureModelButton->setVisible(true);
     ui->NameModeleAcquisitionEdit->setVisible(false);
     ui->NameModeleAquisitionLabel->setVisible(false);
     ui->returnButton2->setVisible(false);
-    ui->AppliquerModification->setVisible(false);
     ui->TypeCharge->setVisible(false);
     ui->comboBoxCharge->setVisible(false);
+    ui->OFFButton->setVisible(true);
+    ui->PrimaryKey->setVisible(true);
+    ui->PrimaryKeylabel->setVisible(true);
+    ui->ClientWebButton->setVisible(true);
 }
 
-void MainWindow::measureModelButtonClicked() {;
-    ui->returnButton3->setVisible(true);
-    ui->modifyGatewayButton->setVisible(false);
-    ui->acquisitionModelButton->setVisible(false);
-    ui->measureModelButton->setVisible(false);
-    ui->AppliquerModification->setVisible(true);
-    ui->PeriodeIntegrationInst->setVisible(true);
-    ui->PeriodeIntegrationInstEdit->setVisible(true);
-    ui->PeriodeIntegrationMoy->setVisible(true);
-    ui->PeriodeIntegrationMoyEdit->setVisible(true);
-}
 void MainWindow::returnButtonClicked3()
 {
     ui->modifyGatewayButton->setVisible(true);
+    ui->AppliquerModification->setVisible(true);
     ui->acquisitionModelButton->setVisible(true);
     ui->measureModelButton->setVisible(true);
     ui->returnButton3->setVisible(false);
-    ui->AppliquerModification->setVisible(false);
     ui->PeriodeIntegrationInst->setVisible(false);
     ui->PeriodeIntegrationInstEdit->setVisible(false);
     ui->PeriodeIntegrationMoy->setVisible(false);
     ui->PeriodeIntegrationMoyEdit->setVisible(false);
+    ui->OFFButton->setVisible(true);
+    ui->PrimaryKey->setVisible(true);
+    ui->PrimaryKeylabel->setVisible(true);
+    ui->ClientWebButton->setVisible(true);
 }
 
+void MainWindow::on_returnButton4_clicked()
+{
+    ui->PrimaryKey->setVisible(false);
+    ui->PrimaryKeylabel->setVisible(false);
+    ui->modifyGatewayButton->setVisible(true);
+    ui->acquisitionModelButton->setVisible(true);
+    ui->measureModelButton->setVisible(true);
+    ui->ClientWebButton->setVisible(true);
+    ui->AppliquerModification_2->setVisible(false);
+    ui->idClientEdit->setVisible(false);
+    ui->idClientLabel->setVisible(false);
+    ui->MDPEdit->setVisible(false);
+    ui->MDPLabel->setVisible(false);
+    ui->returnButton4->setVisible(false);
+    ui->showHideButton->setVisible(false);
+    ui->OFFButton->setVisible(true);
+    ui->PrimaryKey->setVisible(true);
+    ui->PrimaryKeylabel->setVisible(true);
+    ui->ClientWebButton->setVisible(true);
+    resetInputFields();
+}
 
+void MainWindow::resetInputFields()
+{
+    ui->gatewayNameEdit->clear();
+    ui->ipAddressEdit->clear();
+    ui->ipAddressPasserelleEdit->clear();
+    ui->ipAddressMaskEdit->clear();
+    ui->ipAddressDNSEdit->clear();
+    ui->NameModeleAcquisitionEdit->clear();
+    ui->PeriodeIntegrationInstEdit->clear();
+    ui->PeriodeIntegrationMoyEdit->clear();
+    ui->NameDomaineEdit->clear();
+    ui->idClientEdit->clear();
+    ui->comboBoxCharge->setCurrentIndex(0);
+    ui->PrimaryKey->setCurrentIndex(0);
+}
+
+void MainWindow::on_ClientWebButton_clicked()
+{
+    ui->idClientEdit->setVisible(true);
+    ui->idClientLabel->setVisible(true);
+    ui->MDPEdit->setVisible(true);
+    ui->MDPLabel->setVisible(true);
+    ui->MDPEdit->setEchoMode(QLineEdit::Password);
+    ui->returnButton4->setVisible(true);
+    ui->AppliquerModification_2->setVisible(true);
+    ui->modifyGatewayButton->setVisible(false);
+    ui->acquisitionModelButton->setVisible(false);
+    ui->measureModelButton->setVisible(false);
+    ui->ClientWebButton->setVisible(false);
+    ui->showHideButton->setVisible(true);
+    ui->PrimaryKey->setVisible(false);
+    ui->PrimaryKeylabel->setVisible(false);
+    ui->OFFButton->setVisible(false);
+    ui->AppliquerModification->setVisible(false);
+}
