@@ -40,10 +40,10 @@
    <widget class="QPushButton" name="AppliquerModification">
     <property name="geometry">
      <rect>
-      <x>240</x>
-      <y>540</y>
-      <width>171</width>
-      <height>41</height>
+      <x>200</x>
+      <y>300</y>
+      <width>201</width>
+      <height>51</height>
      </rect>
     </property>
     <property name="text">
@@ -83,7 +83,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Modifer Paserelle M50</string>
+     <string>Modifier Central M-50</string>
     </property>
    </widget>
    <widget class="QPushButton" name="acquisitionModelButton">
@@ -125,17 +125,17 @@
      <string>Retour</string>
     </property>
    </widget>
-   <widget class="QLabel" name="ipAddressPaserelleLabel">
+   <widget class="QLabel" name="ipAddressPasserelleLabel">
     <property name="geometry">
      <rect>
       <x>20</x>
       <y>220</y>
-      <width>201</width>
+      <width>221</width>
       <height>51</height>
      </rect>
     </property>
     <property name="text">
-     <string>Nouvelle Adresse Ip de la paserelle:</string>
+     <string>Nouvelle Adresse Ip du Gateway :</string>
     </property>
    </widget>
    <widget class="QLabel" name="ipAddressMaskLabel">
@@ -177,7 +177,7 @@
      <string>DHCP :</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="ipAddressPaserelleEdit">
+   <widget class="QLineEdit" name="ipAddressPasserelleEdit">
     <property name="geometry">
      <rect>
       <x>250</x>
@@ -374,24 +374,122 @@
    <widget class="QComboBox" name="PrimaryKey">
     <property name="geometry">
      <rect>
-      <x>250</x>
+      <x>200</x>
       <y>20</y>
-      <width>151</width>
-      <height>31</height>
+      <width>201</width>
+      <height>41</height>
      </rect>
     </property>
    </widget>
    <widget class="QPushButton" name="OFFButton">
     <property name="geometry">
      <rect>
-      <x>240</x>
-      <y>600</y>
-      <width>161</width>
-      <height>41</height>
+      <x>200</x>
+      <y>240</y>
+      <width>201</width>
+      <height>51</height>
      </rect>
     </property>
     <property name="text">
      <string>Redemarrage</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="ClientWebButton">
+    <property name="geometry">
+     <rect>
+      <x>200</x>
+      <y>180</y>
+      <width>201</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Client WEB</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="idClientLabel">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>130</y>
+      <width>141</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Nouvelle id Client :</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="MDPLabel">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>170</y>
+      <width>151</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Nouveau Mot de passe :</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="idClientEdit">
+    <property name="geometry">
+     <rect>
+      <x>200</x>
+      <y>120</y>
+      <width>201</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="MDPEdit">
+    <property name="geometry">
+     <rect>
+      <x>200</x>
+      <y>180</y>
+      <width>201</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="showHideButton">
+    <property name="geometry">
+     <rect>
+      <x>400</x>
+      <y>180</y>
+      <width>41</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="returnButton4">
+    <property name="geometry">
+     <rect>
+      <x>450</x>
+      <y>120</y>
+      <width>181</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Retour</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="AppliquerModification_2">
+    <property name="geometry">
+     <rect>
+      <x>450</x>
+      <y>180</y>
+      <width>181</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Appliquer Modification Web</string>
     </property>
    </widget>
    <zorder>measureModelButton</zorder>
@@ -403,11 +501,11 @@
    <zorder>ipAddressLabel</zorder>
    <zorder>ipAddressEdit</zorder>
    <zorder>returnButton</zorder>
-   <zorder>ipAddressPaserelleLabel</zorder>
+   <zorder>ipAddressPasserelleLabel</zorder>
    <zorder>ipAddressMaskLabel</zorder>
    <zorder>ipAddressDNSLabel</zorder>
    <zorder>DHCPLabel</zorder>
-   <zorder>ipAddressPaserelleEdit</zorder>
+   <zorder>ipAddressPasserelleEdit</zorder>
    <zorder>ipAddressMaskEdit</zorder>
    <zorder>ipAddressDNSEdit</zorder>
    <zorder>comboBoxDHCP</zorder>
@@ -426,6 +524,14 @@
    <zorder>PrimaryKeylabel</zorder>
    <zorder>PrimaryKey</zorder>
    <zorder>OFFButton</zorder>
+   <zorder>ClientWebButton</zorder>
+   <zorder>idClientLabel</zorder>
+   <zorder>MDPLabel</zorder>
+   <zorder>idClientEdit</zorder>
+   <zorder>MDPEdit</zorder>
+   <zorder>showHideButton</zorder>
+   <zorder>returnButton4</zorder>
+   <zorder>AppliquerModification_2</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -433,7 +539,7 @@
      <x>0</x>
      <y>0</y>
      <width>632</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>
