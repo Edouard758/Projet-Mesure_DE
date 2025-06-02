@@ -13,6 +13,7 @@ public:
 
     bool writeSingleRegister(uint8_t unitId, uint16_t address, uint16_t value);
     bool writeMultipleRegisters(uint8_t unitId, uint16_t startAddress, const uint16_t* values, int count);
+    void writeIpAddress(ModbusCommunicator& modbus, const QString& ipString, int startRegister, int unitID);
 
     bool isConnected() const;
 
